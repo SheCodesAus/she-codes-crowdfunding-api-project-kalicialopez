@@ -5,7 +5,7 @@ from rest_framework import status, permissions
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import generics
 
-from .models import CustomUser
+from users.models import CustomUser
 from .serializers import CustomUserSerializer, ChangePasswordSerializer
 from .permissions import IsUserOrReadOnly
 

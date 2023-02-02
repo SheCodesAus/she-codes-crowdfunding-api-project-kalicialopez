@@ -2,11 +2,15 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.http import Http404
-from rest_framework import status, generics, permissions
+from rest_framework import status, generics, permissions, filters
 
-from .models import Project, Pledge
-from .serializers import ProjectSerializer, PledgeSerializer, ProjectDetailSerializer 
-from .serializers import CustomUserSerializer
+from django.db.models import Q
+from itertools import chain
+
+from .models import Project, Pledge, get_user_model
+from .serializers import ProjectSerializer, PledgeSerializer, ProjectDetailSerializer, GlobalSearchSerializer 
+from users.serializers import CustomUserSerializer
+from users.models import CustomUser
 from .permissions import IsOwnerOrReadOnly, IsSupporterOrReadOnly
 
 from django_filters.rest_framework import DjangoFilterBackend
@@ -17,8 +21,10 @@ class ProjectList(generics.ListCreateAPIView):
 
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = ["is_open"]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_fields = ["is_open", "owner", "date_created"]
+    search_fields = ["title", "description"]
+    # can't have the same search fields and filter fields.
 
     def perform_create(self, serializer):
         serializer.save(supporter=self.request.user)
@@ -106,3 +112,24 @@ class PledgeDetail(generics.RetrieveUpdateDestroyAPIView):
 
     queryset = Pledge.objects.all()
     serializer_class = PledgeSerializer
+    
+
+# Modified from https://www.yeti.co/blog/global-search-in-django-rest-framework
+class GlobalSearchList(generics.ListAPIView):   
+    serializer_class = GlobalSearchSerializer   
+    
+    def get_queryset(self):      
+        query = self.request.query_params.get('query', None)      
+        projects = Project.objects.filter(Q(title__icontains=query) | Q(description__icontains=query) | Q(owner__username__icontains=query))
+
+
+        users = CustomUser.objects.filter(Q
+        (username__icontains=query) | Q
+        (first_name__icontains=query) | Q
+        (last_name__icontains=query) | Q
+        (bio__icontains=query) | Q
+        (country_of_residence__icontains=query) | Q
+        (highest_level_of_education__icontains=query))
+
+        all_results = [{"item": x, "type": str(type(x).__name__)} for x in chain(projects, users)]           
+        return all_results

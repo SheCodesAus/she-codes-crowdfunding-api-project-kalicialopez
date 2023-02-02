@@ -28,6 +28,7 @@ urlpatterns = [
     path('api-token-auth/', obtain_auth_token, name='api_token_auth'),
     path('users/', include('users.urls')),
 
+
 ]
 
 def custom404(request, exception=None):
