@@ -45,7 +45,7 @@ class ProjectDetailSerializer(ProjectSerializer):
     liked_by = CustomUserSerializer(many=True, read_only=True)
 
 
-#Ben's solution for Global Serializer using object related fields.
+#Ben's solution for Global Serializer using generic relations  object related fields.
 #https://stackoverflow.com/questions/38721923/serializing-a-generic-relation-in-django-rest-framework/39125641#39125641
 class MultiObjectRelatedField(serializers.RelatedField):
     def to_representation(self, value):
