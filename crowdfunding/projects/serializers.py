@@ -1,8 +1,8 @@
 # from rest_framework.serializers import ModelSerializer
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from .models import Project, Pledge, Comment 
-from users.models import CustomUser 
+from .models import Project, Pledge, Comment
+from users.models import CustomUser
 from users.serializers import CustomUserSerializer
 
 User = get_user_model()
@@ -10,26 +10,29 @@ User = get_user_model()
 
 ''' Pledge Serializer '''
 
+
 class PledgeSerializer(serializers.ModelSerializer):
     # For serializer method field
     supporter = serializers.SerializerMethodField()
 
     class Meta:
         model = Pledge
-        fields = ['id', 'pledge_amount', 'comment', 'anonymous', 'project', 'supporter']
+        fields = ['id', 'pledge_amount', 'comment',
+                  'anonymous', 'project', 'supporter']
         read_only_fields = ['id', 'supporter']
 
-
     def get_supporter(self, obj):
-        if obj.anonymous: #i.e. if anonymous = true
+        if obj.anonymous:  # i.e. if anonymous = true
             return None
         else:
             return obj.supporter.username
+
     def create(self, validated_data):
         return Pledge.objects.create(**validated_data)
 
 
 ''' Project Serializer '''
+
 
 class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
@@ -37,14 +40,17 @@ class ProjectSerializer(serializers.ModelSerializer):
         # total = serializers.DecimalField(decimal_places = 2, max_digits = 9)
 
         model = Project
-        fields = ['id', 'title', 'description', 'goal', 'image', 'is_open', 'date_created', 'owner', 'total', 'liked_by', 'pledges']
-        read_only_fields = ['id', 'owner', 'date_created', 'total', 'liked_by', 'pledges']
-    
+        fields = ['id', 'title', 'description', 'goal', 'image', 'course_name', 'educational_institution', 'current_occupation_or_industry',
+                  'desired_occupation_or_industry', 'is_open', 'date_created', 'owner', 'total', 'liked_by', 'pledges']
+        read_only_fields = ['id', 'owner', 'date_created',
+                            'total', 'liked_by', 'pledges']
 
         def create(self, validated_data):
             return Project.objects.create(**validated_data)
-    
+
+
 ''' Project Detail Serializer '''
+
 
 class ProjectDetailSerializer(ProjectSerializer):
     pledges = PledgeSerializer(many=True, read_only=True)
@@ -53,17 +59,19 @@ class ProjectDetailSerializer(ProjectSerializer):
 
 ''' Comment Serializer '''
 
+
 class CommentSerializer(serializers.ModelSerializer):
     commentator = serializers.ReadOnlyField(source='commentator.username')
+
     class Meta:
         model = Comment
         fields = '__all__'
         # fields = ['id', 'project', 'title', 'content', 'commentator']
         # read_only_fields = ['id']
-    
+
     def create(self, validated_data):
         return Comment.objects.create(**validated_data)
-    
+
     def update(self, instance, validated_data):
         instance.save()
         return instance
@@ -78,8 +86,10 @@ class CommentSerializer(serializers.ModelSerializer):
 
 ''' Global Search Serializer '''
 
-#Ben's solution for Global Serializer using generic relations  object related fields.
-#https://stackoverflow.com/questions/38721923/serializing-a-generic-relation-in-django-rest-framework/39125641#39125641
+# Ben's solution for Global Serializer using generic relations object related fields.
+# https://stackoverflow.com/questions/38721923/serializing-a-generic-relation-in-django-rest-framework/39125641#39125641
+
+
 class MultiObjectRelatedField(serializers.RelatedField):
     def to_representation(self, value):
         if isinstance(value, Project):
@@ -103,9 +113,11 @@ class MultiObjectHyperlinkedField(serializers.HyperlinkedRelatedField):
             format = self.format
         # this is where the actual work happens.
         if isinstance(value, Project):
-            field = self.get_url(value, "project-detail", request=request, format=format)
+            field = self.get_url(value, "project-detail",
+                                 request=request, format=format)
         elif isinstance(value, User):
-            field = self.get_url(value, "customuser-detail", request=request, format=format)
+            field = self.get_url(value, "customuser-detail",
+                                 request=request, format=format)
         else:
             raise TypeError("Unexpected type of tagged object")
         return field
@@ -121,21 +133,20 @@ class GlobalSearchSerializer(serializers.Serializer):
 
     def update(self, instance, validated_data):
         raise NotImplementedError
-    
 
 
-# # Original code modified from https://www.yeti.co/blog/global-search-in-django-rest-framework which did not work 
-# class GlobalSearchSerializer(serializers.ModelSerializer):      
+# # Original code modified from https://www.yeti.co/blog/global-search-in-django-rest-framework which did not work
+# class GlobalSearchSerializer(serializers.ModelSerializer):
 #     class Meta:
-    
+
 #         model = CustomUser
 #         fields = ['first_name', 'last_name', 'bio', 'country_of_residence', 'highest_level_of_education']
-            
-#     def to_internal_value(self, obj):      
-#         if isinstance(obj, Project):          
-#             serializer = ProjectSerializer(obj)      
-#         elif isinstance(obj, CustomUser):         
-#             serializer = CustomUserSerializer(obj)      
-#         else:         
-#             raise Exception("Neither a project nor user instance!")      
+
+#     def to_internal_value(self, obj):
+#         if isinstance(obj, Project):
+#             serializer = ProjectSerializer(obj)
+#         elif isinstance(obj, CustomUser):
+#             serializer = CustomUserSerializer(obj)
+#         else:
+#             raise Exception("Neither a project nor user instance!")
 #         return serializer.data
