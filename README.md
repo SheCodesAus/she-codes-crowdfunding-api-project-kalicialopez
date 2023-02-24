@@ -90,13 +90,13 @@ Potential donors: Private enterprise, philanthropists and the general public, an
 
 {{ Filtering through existing project list based on a number of parameters }}
 
-- [X] {Search Function}
+- [X] {Local search function}
 
 {{ Search Function currently embedded into Filter }}
 
-- [ ] {Title Feature 3} 
+- [x] {Global Search Function} 
 
-{{ description of feature 3 }}
+{{ Site-wide search function through both users and projects models }}
 
 ### External libraries used
 
