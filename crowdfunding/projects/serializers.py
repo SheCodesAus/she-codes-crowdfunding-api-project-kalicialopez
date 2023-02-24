@@ -1,11 +1,14 @@
 # from rest_framework.serializers import ModelSerializer
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from .models import Project, Pledge 
+from .models import Project, Pledge, Comment 
 from users.models import CustomUser 
 from users.serializers import CustomUserSerializer
 
 User = get_user_model()
+
+
+''' Pledge Serializer '''
 
 class PledgeSerializer(serializers.ModelSerializer):
     # For serializer method field
@@ -26,6 +29,8 @@ class PledgeSerializer(serializers.ModelSerializer):
         return Pledge.objects.create(**validated_data)
 
 
+''' Project Serializer '''
+
 class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
 
@@ -39,11 +44,39 @@ class ProjectSerializer(serializers.ModelSerializer):
         def create(self, validated_data):
             return Project.objects.create(**validated_data)
     
+''' Project Detail Serializer '''
 
 class ProjectDetailSerializer(ProjectSerializer):
     pledges = PledgeSerializer(many=True, read_only=True)
     liked_by = CustomUserSerializer(many=True, read_only=True)
 
+
+''' Comment Serializer '''
+
+class CommentSerializer(serializers.ModelSerializer):
+    commentator = serializers.ReadOnlyField(source='commentator.username')
+    class Meta:
+        model = Comment
+        fields = '__all__'
+        # fields = ['id', 'project', 'title', 'content', 'commentator']
+        # read_only_fields = ['id']
+    
+    def create(self, validated_data):
+        return Comment.objects.create(**validated_data)
+    
+    def update(self, instance, validated_data):
+        instance.save()
+        return instance
+
+
+# ''' Comment Detail Serializer '''
+#  Unsure if this is required - currently unable to edit comments?
+# class CommentDetailSerializer(CommentSerializer):
+#     Comment = CommentSerializer(many=True, read_only=True)
+#     liked_by = CustomUserSerializer(many=True, read_only=True)
+
+
+''' Global Search Serializer '''
 
 #Ben's solution for Global Serializer using generic relations  object related fields.
 #https://stackoverflow.com/questions/38721923/serializing-a-generic-relation-in-django-rest-framework/39125641#39125641

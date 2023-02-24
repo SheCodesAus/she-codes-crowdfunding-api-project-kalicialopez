@@ -1,10 +1,11 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 
-
 # Create your models here.
 
 User = get_user_model()
+
+''' Project Model '''
 
 class Project(models.Model):
     title = models.CharField(max_length=100)
@@ -28,6 +29,8 @@ class Project(models.Model):
         return self.pledges.aggregate(sum=models.Sum('pledge_amount'))['sum']
 
 
+''' Pledge Model '''
+
 class Pledge(models.Model):
     pledge_amount = models.DecimalField(decimal_places = 2, max_digits = 10)
     comment = models.CharField(max_length=200)
@@ -40,4 +43,12 @@ class Pledge(models.Model):
         User,
         on_delete=models.CASCADE,
         related_name='supporter_pledges')
+
+''' Comment Model '''
+
+class Comment(models.Model):
+    title = models.CharField(max_length=100, null=True, blank=True)
+    content = models.TextField(blank=True, null=True)
+    project = models.ForeignKey('Project',  on_delete=models.CASCADE, related_name='comments')
+    commentator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='commentator_comment')
     

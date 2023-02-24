@@ -7,8 +7,8 @@ from rest_framework import status, generics, permissions, filters
 from django.db.models import Q
 from itertools import chain
 
-from .models import Project, Pledge, get_user_model
-from .serializers import ProjectSerializer, PledgeSerializer, ProjectDetailSerializer, GlobalSearchSerializer 
+from .models import Project, Pledge, Comment, get_user_model
+from .serializers import ProjectSerializer, PledgeSerializer, ProjectDetailSerializer, CommentSerializer, GlobalSearchSerializer 
 from users.serializers import CustomUserSerializer
 from users.models import CustomUser
 from .permissions import IsOwnerOrReadOnly, IsSupporterOrReadOnly
@@ -16,6 +16,9 @@ from .permissions import IsOwnerOrReadOnly, IsSupporterOrReadOnly
 from django_filters.rest_framework import DjangoFilterBackend
 
 # Create your views here.
+
+
+''' Project list view '''
 
 class ProjectList(generics.ListCreateAPIView):
 
@@ -47,7 +50,10 @@ class ProjectList(generics.ListCreateAPIView):
             serializer.save(owner=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
+
+''' Project detail view '''
+
 class ProjectDetail(APIView):
 
     permission_classes = [
@@ -87,6 +93,8 @@ class ProjectDetail(APIView):
         return Response (status=status.HTTP_204_NO_CONTENT)
 
 
+''' Pledge list view '''
+
 class PledgeList(generics.ListCreateAPIView):
 
     queryset = Pledge.objects.all()
@@ -112,7 +120,76 @@ class PledgeDetail(generics.RetrieveUpdateDestroyAPIView):
 
     queryset = Pledge.objects.all()
     serializer_class = PledgeSerializer
+
+
+''' Comment list view '''
+''' To be viewed in project list view/project detail view? '''
+
+class CommentList(generics.ListCreateAPIView):
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['project',]
     
+    def perform_create(self, serializer):
+        serializer.save(commentator=self.request.user)
+    
+    # def post(self, request):
+    #     serializer = CommentSerializer(data=request.data)
+    #     if serializer.is_valid():
+    #         serializer.save()
+    #         return Response(
+    #             serializer.data,
+    #             status=status.HTTP_201_CREATED
+    #         )
+    #     return Response(
+    #         serializer.errors,
+    #         status=status.HTTP_400_BAD_REQUEST
+    #     )
+
+
+''' Comment Detail View '''
+''' Logged in user is currently unable to edit comments. Unsure if this is because I do not have a CommentDetailSerializer? '''
+
+class CommentDetail(generics.RetrieveUpdateDestroyAPIView):
+    # permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+
+    def get_object(self, pk):
+        try:
+            comment = Comment.objects.get(pk=pk)
+            self.check_object_permissions(self.request, comment)
+            return comment
+        except Comment.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk):
+        comment = self.get_object(pk)
+        serializer = CommentSerializer(comment)
+        return Response(serializer.data)
+
+    def put(self, request, pk):
+        comment = self.get_object(pk)
+        data = request.data
+        serializer = CommentSerializer(
+            instance=comment,
+            data=data,
+            partial=True
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, pk):
+        comment = self.get_object(pk=pk)
+        comment.delete()
+        return Response (status=status.HTTP_204_NO_CONTENT)
+
+
+''' Global search view '''
 
 # Modified from https://www.yeti.co/blog/global-search-in-django-rest-framework
 class GlobalSearchList(generics.ListAPIView):   
