@@ -26,7 +26,7 @@ class ProjectList(generics.ListCreateAPIView):
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ["is_open", "owner", "date_created", "educational_institution",
+    filterset_fields = ["is_open", "owner", "date_created", "campaign_deadline",  "educational_institution",
                         "current_occupation_or_industry", "desired_occupation_or_industry"]
     search_fields = ["title", "description"]
     # can't have the same search fields and filter fields.

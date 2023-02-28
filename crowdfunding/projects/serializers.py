@@ -41,7 +41,7 @@ class ProjectSerializer(serializers.ModelSerializer):
 
         model = Project
         fields = ['id', 'title', 'description', 'goal', 'image', 'course_name', 'educational_institution', 'current_occupation_or_industry',
-                  'desired_occupation_or_industry', 'is_open', 'date_created', 'owner', 'total', 'liked_by', 'pledges']
+                  'desired_occupation_or_industry', 'is_open', 'date_created', 'campaign_deadline', 'owner', 'total', 'liked_by', 'pledges']
         read_only_fields = ['id', 'owner', 'date_created',
                             'total', 'liked_by', 'pledges']
 

@@ -19,6 +19,7 @@ class Project(models.Model):
     desired_occupation_or_industry = models.CharField(max_length=100)
     is_open = models.BooleanField()
     date_created = models.DateTimeField(auto_now_add=True)
+    campaign_deadline = models.DateTimeField(blank=True, null=True)
     owner = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
