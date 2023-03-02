@@ -9,9 +9,9 @@ urlpatterns = [
     path('pledges/', views.PledgeList.as_view(), name="pledge-list"),
     path('pledges/<int:pk>/', views.PledgeDetail.as_view(), name='pledge-detail'),
     path('search/', views.GlobalSearchList.as_view(), name="search"),
-    # path('comments/', views.CommentList.as_view(), name='comment-list'),
+    path('comments/', views.CommentList.as_view(), name='comment-list'),
     path('comments/<int:pk>/', views.CommentDetail.as_view(), name='comment-detail'),
-    path('comments/<int:project_pk>/', views.CommentList.as_view(), name='comment-list'),
+    # path('comments/<int:project_pk>/', views.CommentList.as_view(), name='comment-list'),
 
 
 ]

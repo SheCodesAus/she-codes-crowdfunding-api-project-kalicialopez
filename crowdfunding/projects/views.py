@@ -140,15 +140,16 @@ class CommentList(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save(commentator=self.request.user)
     
-    def get(self, request, project_pk):
-        project = Project.objects.get(pk=project_pk)
-        comments = CommentList.objects.filter(project=project)
-        comment_serializer = CommentSerializer(comments, many=True)
+    # def get(self, request, project_pk):
+    #     project = Project.objects.get(pk=project_pk)
+    #     comments = CommentList.objects.filter(project=project)
+    #     comment_serializer = CommentSerializer(comments, many=True)
 
-        return Response({
-            'comments': comment_serializer.data
-        })
+    #     return Response({
+    #         'comments': comment_serializer.data
+    #     })
 
+    # the above def get is based off this code 
     # def get(self, request, country_pk):
     #     # get the country by its primary key from the url
     #     country = Country.objects.get(pk=country_pk)
@@ -160,6 +161,7 @@ class CommentList(generics.ListCreateAPIView):
     #         'locations': location_serializer.data
     #     })
 
+    # Experimental code?
     # def post(self, request):
     #     serializer = CommentSerializer(data=request.data)
     #     if serializer.is_valid():
