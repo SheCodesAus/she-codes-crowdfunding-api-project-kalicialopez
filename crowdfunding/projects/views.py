@@ -77,6 +77,7 @@ class ProjectDetail(generics.RetrieveUpdateDestroyAPIView):
         permissions.IsAuthenticatedOrReadOnly, 
         IsOwnerOrReadOnly
     ]
+    serializer_class = ProjectDetailSerializer
 
 # The following functions may be useless due to changing from APIView to generics.RetrieveUpdateDestroyAPIView?
 

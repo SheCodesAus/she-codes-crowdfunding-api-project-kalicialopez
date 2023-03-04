@@ -20,7 +20,7 @@ class PledgeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pledge
         fields = ['id', 'pledge_amount', 'comment',
-                  'anonymous', 'project', 'supporter']
+                  'anonymous', 'project', 'supporter', 'supporter_profile_picture']
         read_only_fields = ['id', 'supporter']
 
     def get_supporter(self, obj):
@@ -37,6 +37,7 @@ class PledgeSerializer(serializers.ModelSerializer):
 
 
 class PledgeDetailSerializer(PledgeSerializer):
+# is pledgedetailserializer(pledgeserializer) the same as declaring a serializer class field?
 
     class Meta:
         model = Pledge
@@ -69,6 +70,8 @@ class ProjectSerializer(serializers.ModelSerializer):
     goal_balance = serializers.ReadOnlyField()
     funding_status = serializers.ReadOnlyField()
     owner_profile_picture = serializers.SerializerMethodField()
+
+    # This is not working, no likes are displayed. 
     liked_by = serializers.ReadOnlyField(source="liked_projects")
     
     class Meta:
@@ -122,12 +125,6 @@ class ProjectSerializer(serializers.ModelSerializer):
         return Project.objects.create(**validated_data)
 
 
-
-''' Project Detail Serializer '''
-
-
-
-
 ''' Comment Serializer '''
 
 
@@ -151,6 +148,9 @@ class CommentSerializer(serializers.ModelSerializer):
             'commentator'
             ]
 
+    def get_commentator_profile_picture(self, obj):
+        return obj.commentator.profile_picture
+
 
 # Not sure if this should be here?
     def create(self, validated_data):
@@ -170,6 +170,8 @@ class CommentSerializer(serializers.ModelSerializer):
 #     liked_by = CustomUserSerializer(many=True, read_only=True)
 
 
+''' Project Detail Serializer '''
+
 # Need to put ProjectDetailSerializer below the CommentSerializer because we make reference the CommentSerializer below
 class ProjectDetailSerializer(ProjectSerializer):
     pledges = PledgeSerializer(many=True, read_only=True)
@@ -186,7 +188,7 @@ class ProjectDetailSerializer(ProjectSerializer):
             "image",
             "is_open",
             "date_created",
-            "deadline",
+            "campaign_deadline",
             "owner",
             "owner_profile_picture",
             "total",
