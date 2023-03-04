@@ -12,8 +12,10 @@ User = get_user_model()
 
 
 class PledgeSerializer(serializers.ModelSerializer):
+    
     # For serializer method field
     supporter = serializers.SerializerMethodField()
+    supporter_profile_picture = serializers.SerializerMethodField()
 
     class Meta:
         model = Pledge
@@ -27,34 +29,103 @@ class PledgeSerializer(serializers.ModelSerializer):
         else:
             return obj.supporter.username
 
+    def get_supporter_profile_picture(self, obj):
+        return obj.supporter.profile_picture
+    
     def create(self, validated_data):
         return Pledge.objects.create(**validated_data)
+
+
+class PledgeDetailSerializer(PledgeSerializer):
+
+    class Meta:
+        model = Pledge
+        fields = [
+            "id",
+            "pledge_amount",
+            "comment",
+            "anonymous",
+            "project",
+            "supporter",
+            "supporter_profile_picture",
+            "pledge_date"
+            ]
+        read_only_fields = [
+            "id", 
+             "supporter", 
+             "pledge_amount", 
+             "project"
+             ]
 
 
 ''' Project Serializer '''
 
 
 class ProjectSerializer(serializers.ModelSerializer):
+    
+    owner = serializers.ReadOnlyField(source="owner_id")
+    owner = serializers.SerializerMethodField()
+    total = serializers.ReadOnlyField()
+    goal_balance = serializers.ReadOnlyField()
+    funding_status = serializers.ReadOnlyField()
+    owner_profile_picture = serializers.SerializerMethodField()
+    liked_by = serializers.ReadOnlyField(source="liked_projects")
+    
     class Meta:
 
         # total = serializers.DecimalField(decimal_places = 2, max_digits = 9)
 
         model = Project
-        fields = ['id', 'title', 'description', 'goal', 'image', 'course_name', 'educational_institution', 'current_occupation_or_industry',
-                  'desired_occupation_or_industry', 'is_open', 'date_created', 'campaign_deadline', 'owner', 'total', 'liked_by', 'pledges']
-        read_only_fields = ['id', 'owner', 'date_created',
-                            'total', 'liked_by', 'pledges']
+        fields = [
+            'id', 
+            'title', 
+            'description', 
+            'goal', 
+            'image', 
+            'course_name', 
+            'educational_institution', 
+            'current_occupation_or_industry',
+            'desired_occupation_or_industry', 
+            'is_open', 
+            'date_created', 
+            'campaign_deadline', 
+            'owner', 
+            'total',
+            'goal_balance',
+            'funding_status', 
+            'liked_by', 
+            'pledges',
+            'total',
+            'goal_balance',
+            'funding_status',
+            'owner_profile_picture'
+            ]
+        read_only_fields = [
+            'id', 
+            'owner', 
+            'date_created',
+            'total',
+            'goal_balance'
+            'funding_status', 
+            'liked_by', 
+            'pledges'
+            ]
+    
+    def get_owner(self, obj):
+        return obj.owner.username
 
-        def create(self, validated_data):
-            return Project.objects.create(**validated_data)
+    def get_owner_profile_picture(self, obj):
+        return obj.owner.profile_picture
+
+# Unsure if this should be here
+    def create(self, validated_data):
+        return Project.objects.create(**validated_data)
+
 
 
 ''' Project Detail Serializer '''
 
 
-class ProjectDetailSerializer(ProjectSerializer):
-    pledges = PledgeSerializer(many=True, read_only=True)
-    liked_by = CustomUserSerializer(many=True, read_only=True)
 
 
 ''' Comment Serializer '''
@@ -62,13 +133,26 @@ class ProjectDetailSerializer(ProjectSerializer):
 
 class CommentSerializer(serializers.ModelSerializer):
     commentator = serializers.ReadOnlyField(source='commentator.username')
+    commentator_profile_picture = serializers.SerializerMethodField()
 
     class Meta:
         model = Comment
-        fields = '__all__'
-        # fields = ['id', 'project', 'title', 'content', 'commentator']
-        # read_only_fields = ['id']
+        fields = [
+            'id', 
+            'project',
+            'created',
+            'content', 
+            'commentator',
+            'commentator_profile_picture',
+            ]
+        read_only_fields = [
+            'id',
+            'project',
+            'commentator'
+            ]
 
+
+# Not sure if this should be here?
     def create(self, validated_data):
         return Comment.objects.create(**validated_data)
 
@@ -77,11 +161,50 @@ class CommentSerializer(serializers.ModelSerializer):
         return instance
 
 
-# ''' Comment Detail Serializer '''
+# ''' Comment Detail Serializer ''' 
+
+#  Update - don't need a whole other comment detail serializer, just need to refer to these objects before setting out Meta class in the project detail serializer, as that is where they will appear.
 #  Unsure if this is required - currently unable to edit comments?
 # class CommentDetailSerializer(CommentSerializer):
 #     Comment = CommentSerializer(many=True, read_only=True)
 #     liked_by = CustomUserSerializer(many=True, read_only=True)
+
+
+# Need to put ProjectDetailSerializer below the CommentSerializer because we make reference the CommentSerializer below
+class ProjectDetailSerializer(ProjectSerializer):
+    pledges = PledgeSerializer(many=True, read_only=True)
+    comments = CommentSerializer(many=True, read_only=True)
+    liked_by = CustomUserSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Project
+        fields = [
+            "id",
+            "title",
+            "description",
+            "goal",
+            "image",
+            "is_open",
+            "date_created",
+            "deadline",
+            "owner",
+            "owner_profile_picture",
+            "total",
+            "goal_balance",
+            "funding_status",
+            "pledges",
+            "comments",
+        ]
+        read_only_fields = [
+            "id", 
+            "owner",
+            'date_created', 
+            "total", 
+            "goal_balance", 
+            "funding_status",
+            "liked_by",
+            "pledges"
+            ]
 
 
 ''' Global Search Serializer '''

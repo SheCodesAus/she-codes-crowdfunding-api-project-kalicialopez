@@ -23,7 +23,8 @@ class Project(models.Model):
     owner = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='owner_projects'
+        related_name='owner_projects' #foreign key links id of owner to owner of 'owner_projects'
+
     )
     # total = models.DecimalField(decimal_places = 2, max_digits = 10)
     liked_by = models.ManyToManyField(
@@ -33,7 +34,25 @@ class Project(models.Model):
 
     @property
     def total(self):
-        return self.pledges.aggregate(sum=models.Sum('pledge_amount'))['sum']
+        total = self.pledges.aggregate(sum=models.Sum('pledge_amount'))['sum']
+        if total == None:
+            return 0
+        else:
+            return total
+
+    @property
+    def goal_balance(self):
+        return self.goal - self.total
+        
+
+    @property
+    def funding_status(self):
+        if self.goal_balance <= 0:
+            return f"Funded"
+        elif self.goal_balance == self.goal:
+            return f"No pledges received"
+        else:
+            return f"Partially funded"
 
 
 ''' Pledge Model '''
@@ -51,15 +70,22 @@ class Pledge(models.Model):
         User,
         on_delete=models.CASCADE,
         related_name='supporter_pledges')
+    pledge_date=models.DateTimeField(auto_now_add=True)
 
 
 ''' Comment Model '''
 
 
 class Comment(models.Model):
-    title = models.CharField(max_length=100, null=True, blank=True)
     content = models.TextField(blank=True, null=True)
     project = models.ForeignKey(
-        'Project',  on_delete=models.CASCADE, related_name='comments')
+        Project,  
+        on_delete=models.CASCADE, 
+        related_name='comments'
+        )
     commentator = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='commentator_comment')
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='commentator_comment'
+        )
+    created = models.DateTimeField(auto_now_add=True)

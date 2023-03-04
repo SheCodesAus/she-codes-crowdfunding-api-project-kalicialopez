@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
+from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.http import Http404
 from rest_framework import status, generics, permissions, filters
@@ -8,10 +9,22 @@ from django.db.models import Q
 from itertools import chain
 
 from .models import Project, Pledge, Comment, get_user_model
-from .serializers import ProjectSerializer, PledgeSerializer, ProjectDetailSerializer, CommentSerializer, GlobalSearchSerializer
+from .serializers import (
+    ProjectSerializer, 
+    PledgeSerializer,
+    PledgeDetailSerializer, 
+    ProjectDetailSerializer, 
+    CommentSerializer, 
+    GlobalSearchSerializer
+    )
+
 from users.serializers import CustomUserSerializer
 from users.models import CustomUser
-from .permissions import IsOwnerOrReadOnly, IsSupporterOrReadOnly
+from .permissions import (
+    IsOwnerOrReadOnly, 
+    IsSupporterOrReadOnly,
+    IsCommentatorOrReadOnly
+    )
 
 from django_filters.rest_framework import DjangoFilterBackend
 
@@ -32,7 +45,7 @@ class ProjectList(generics.ListCreateAPIView):
     # can't have the same search fields and filter fields.
 
     def perform_create(self, serializer):
-        serializer.save(supporter=self.request.user)
+        serializer.save(owner=self.request.user, supporter=self.request.user, )
 
     def post(self, request):
         serializer = ProjectSerializer(data=request.data)
@@ -41,11 +54,13 @@ class ProjectList(generics.ListCreateAPIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+#     experimental code
 #     def get(self, request):
 #         projects = Project.objects.all()
 #         serializer = ProjectSerializer(projects, many=True)
 #         return Response(serializer.data)
 
+# Don't really need a post in the listview?
     def post(self, request):
         serializer = ProjectSerializer(data=request.data)
         if serializer.is_valid():
@@ -57,11 +72,13 @@ class ProjectList(generics.ListCreateAPIView):
 ''' Project detail view '''
 
 
-class ProjectDetail(APIView):
-
+class ProjectDetail(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [
-        permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly
+        permissions.IsAuthenticatedOrReadOnly, 
+        IsOwnerOrReadOnly
     ]
+
+# The following functions may be useless due to changing from APIView to generics.RetrieveUpdateDestroyAPIView?
 
     def get_object(self, pk):
         try:
@@ -104,7 +121,7 @@ class PledgeList(generics.ListCreateAPIView):
     queryset = Pledge.objects.all()
     serializer_class = PledgeSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ("supporter",)
+    filterset_fields = ("supporter", "project")
 
     def perform_create(self, serializer):
         serializer.save(supporter=self.request.user)
@@ -116,18 +133,51 @@ class PledgeList(generics.ListCreateAPIView):
     #     return Response(serializer.data)
 
 
-class PledgeDetail(generics.RetrieveUpdateDestroyAPIView):
-
+class PledgeDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [
-        permissions.IsAuthenticatedOrReadOnly, IsSupporterOrReadOnly
+        permissions.IsAuthenticatedOrReadOnly, 
+        IsSupporterOrReadOnly
     ]
-
     queryset = Pledge.objects.all()
-    serializer_class = PledgeSerializer
+    serializer_class = PledgeDetailSerializer
+
+# Experimental code (copied from ProjectDetailView) The following functions may be useless seeing as this was always a generics.ReRetrieveUpdateDestroyAPIView
+
+    def get_object(self, pk):
+        try:
+            pledge = Pledge.objects.get(pk=pk)
+            self.check_object_permissions(self.request, pledge)
+            return pledge
+        except Pledge.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk):
+        pledge = self.get_object(pk)
+        serializer = PledgeDetailSerializer(pledge)
+        return Response(serializer.data)
+
+    def put(self, request, pk):
+        pledge = self.get_object(pk)
+        data = request.data
+        serializer = PledgeDetailSerializer(
+            instance=pledge,
+            data=data,
+            partial=True
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    # https://www.youtube.com/watch?v=b680A5fteEo
+    def delete(self, request, pk):
+        pledge = self.get_object(pk=pk)
+        pledge.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 ''' Comment list view '''
-''' To be viewed in project list view/project detail view? '''
+''' To be viewed in project list view/project detail view on front-end '''
 
 
 class CommentList(generics.ListCreateAPIView):
@@ -140,6 +190,7 @@ class CommentList(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save(commentator=self.request.user)
     
+    # Experimental code - trying to link up the comment owner to the project with Ben Derham (mentor)
     # def get(self, request, project_pk):
     #     project = Project.objects.get(pk=project_pk)
     #     comments = CommentList.objects.filter(project=project)
@@ -161,7 +212,7 @@ class CommentList(generics.ListCreateAPIView):
     #         'locations': location_serializer.data
     #     })
 
-    # Experimental code?
+    # Experimental code, may be useless?
     # def post(self, request):
     #     serializer = CommentSerializer(data=request.data)
     #     if serializer.is_valid():
@@ -181,10 +232,13 @@ class CommentList(generics.ListCreateAPIView):
 
 
 class CommentDetail(generics.RetrieveUpdateDestroyAPIView):
-    # permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly,
+                          IsCommentatorOrReadOnly]
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
 
+
+# Experimental code, may be useless due to this being a generics.RetrieveUpdateDestroyAPIView?
     def get_object(self, pk):
         try:
             comment = Comment.objects.get(pk=pk)
