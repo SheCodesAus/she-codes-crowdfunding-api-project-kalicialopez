@@ -9,6 +9,7 @@ from users.models import CustomUser
 from .serializers import CustomUserSerializer, ChangePasswordSerializer
 from .permissions import IsUserOrReadOnly
 
+# Create your views here.
 
 class CustomUserList(APIView):
 
@@ -57,7 +58,23 @@ class CustomUserDetail(APIView):
         return Response(serializer.errors)
     
   # edit user detail not working.  
-# Create your views here.
+
+
+class SessionUserDetailView(APIView):
+
+    permission_classes = [
+        permissions.IsAuthenticated]
+    
+    def get_object(self):
+        try:
+            return self.request.user
+        except CustomUser.DoesNotExist:
+            raise Http404
+    def get(self, request):
+        print(request)
+        user = self.get_object()
+        serializer = CustomUserSerializer(user)
+        return Response(serializer.data) 
 
 class ChangePasswordView(generics.UpdateAPIView):
     queryset = CustomUser.objects.all()
