@@ -57,7 +57,7 @@ class Pledge(models.Model):
 
 
 class Comment(models.Model):
-    title = models.CharField(max_length=100, null=True, blank=True)
+    # title = models.CharField(max_length=100, null=True, blank=True)
     content = models.TextField(blank=True, null=True)
     project = models.ForeignKey(
         'Project',  on_delete=models.CASCADE, related_name='comments')
