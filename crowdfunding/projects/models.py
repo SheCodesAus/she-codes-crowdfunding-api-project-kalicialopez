@@ -30,10 +30,25 @@ class Project(models.Model):
         User,
         related_name='liked_projects'
     )
+    # @property & annotations
+    # insert this to count the sum the amount of pledges to calculate
 
     @property
-    def total(self):
-        return self.pledges.aggregate(sum=models.Sum('pledge_amount'))['sum']
+    def sum_pledges(self):
+        pledge_sum = self.pledges.aggregate(sum=models.Sum("amount"))["sum"]
+        if pledge_sum == None:
+            return 0
+        else:
+            return pledge_sum
+
+    @property
+    def goal_balance(self):
+        return self.goal - self.sum_pledges
+
+    # code to return title name in the drop down
+    def __str__(self):
+        return self.title
+
 
 
 ''' Pledge Model '''

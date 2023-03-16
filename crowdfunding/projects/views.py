@@ -22,7 +22,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 
 
 class ProjectList(generics.ListCreateAPIView):
-
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
@@ -31,8 +31,8 @@ class ProjectList(generics.ListCreateAPIView):
     search_fields = ["title", "description"]
     # can't have the same search fields and filter fields.
 
-    def perform_create(self, serializer):
-        serializer.save(supporter=self.request.user)
+    # def perform_create(self, serializer):
+    #     serializer.save(supporter=self.request.user)
 
     def post(self, request):
         serializer = ProjectSerializer(data=request.data)
@@ -46,12 +46,11 @@ class ProjectList(generics.ListCreateAPIView):
 #         serializer = ProjectSerializer(projects, many=True)
 #         return Response(serializer.data)
 
-    def post(self, request):
-        serializer = ProjectSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(owner=request.user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+def delete(self, request, id=None):
+        project = self.get_object(id=id)
+        serializer = ProjectDetailSerializer(project)
+        project.delete()
+        return Response(ProjectDetailSerializer.data, status=status.HTTP_204_NO_CONTENT)
 
 
 ''' Project detail view '''
