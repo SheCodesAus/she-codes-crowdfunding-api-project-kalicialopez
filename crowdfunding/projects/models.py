@@ -55,7 +55,7 @@ class Project(models.Model):
 
 
 class Pledge(models.Model):
-    pledge_amount = models.DecimalField(decimal_places=2, max_digits=10)
+    amount = models.DecimalField(decimal_places=2, max_digits=10)
     comment = models.CharField(max_length=200)
     anonymous = models.BooleanField(default=False)
     project = models.ForeignKey(
