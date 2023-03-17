@@ -78,3 +78,4 @@ class Comment(models.Model):
         'Project',  on_delete=models.CASCADE, related_name='comments')
     commentator = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='commentator_comment')
+    date_created =     date_created = models.DateTimeField(auto_now_add=True)
