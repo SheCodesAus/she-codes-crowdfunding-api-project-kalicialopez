@@ -76,7 +76,11 @@ class CommentSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
-
+    def get(self, instance):
+        # instance.save() Don't need to save data when fetching.
+        return instance
+    
+    
 # ''' Comment Detail Serializer '''
 #  Unsure if this is required - currently unable to edit comments?
 # class CommentDetailSerializer(CommentSerializer):
